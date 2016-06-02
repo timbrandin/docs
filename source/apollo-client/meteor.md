@@ -8,6 +8,11 @@ The Apollo client and server tools are published on NPM, which makes them availa
 
 You can see all of these in action in the [Apollo Meteor starter kit](https://github.com/apollostack/meteor-starter-kit).
 
+```
+meteor add apollo
+meteor npm add --save apollo-client apollo-server express
+```
+
 ## Client
 
 ```js
