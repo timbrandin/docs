@@ -10,106 +10,29 @@ You can see all of these in action in the [Apollo Meteor starter kit](https://gi
 
 ## Client
 
-### Using with Meteor Accounts
-
-The only thing you need to do on the client to pass through your Meteor login token into the Apollo server is to create a network interface with a header that passes the login token you can get from the Meteor Accounts client. Then just log in as normal and requests sent after that point will be authenticated.
-
 ```js
-import ApolloClient, { createNetworkInterface } from 'apollo-client';
-import { Accounts } from 'meteor/accounts-base';
-
-const networkInterface = createNetworkInterface('/graphql');
-
-networkInterface.use([{
-  applyMiddleware(request, next) {
-    const currentUserToken = Accounts._storedLoginToken();
-
-    if (!currentUserToken) {
-      next();
-      return;
-    }
-
-    if (!request.options.headers) {
-      request.options.headers = new Headers();
-    }
-
-    request.options.headers.Authorization = currentUserToken;
-
-    next();
-  }
-}]);
+import ApolloClient from 'apollo-client';
+import { createMeteorNetworkInterface } from 'meteor/apollo';
 
 const client = new ApolloClient({
-  networkInterface,
+  networkInterface: createMeteorNetworkInterface()
 });
 ```
 
 ## Server
 
-### Using Express with WebApp
-
-The Apollo server, and the Express GraphQL package that it is based on, rely on the Express server-side API framework. To use it, you will need to initialize a new Express server and proxy it to your Meteor `WebApp` server.
-
 ```js
-import { apolloServer } from 'graphql-tools';
-import express from 'express';
-import { Meteor } from 'meteor/meteor';
-import { WebApp } from 'meteor/webapp';
+import { createApolloServer } from 'meteor/apollo';
 
-import { schema, resolvers } from '/imports/api/schema';
+import schema from '/imports/api/schema';
+import resolvers from '/imports/api/resolvers';
 
-const graphQLServer = express();
-
-graphQLServer.use('/graphql', apolloServer({
+createApolloServer({
   graphiql: true,
   pretty: true,
   schema,
   resolvers,
-}));
-
-// This redirects all requests to /graphql to our Express GraphQL server
-WebApp.connectHandlers.use(Meteor.bindEnvironment(graphQLServer));
-```
-
-### Getting the current user
-
-If you are passing in the login token from the client as detailed above, you probably want to get the current user on the server, and use that in your resolvers. To do so, you should make your `apolloServer` options a function of the current request, and use some Meteor packages to get the user from the login token.
-
-```js
-// Some more imports
-import { Meteor } from 'meteor/meteor';
-import { Accounts } from 'meteor/accounts-base';
-import { check } from 'meteor/check';
-
-// ... same setup code as above
-
-graphQLServer.use('/graphql', apolloServer(async (req) => {
-  let user = null;
-
-  // Get the token from the header
-  if (req.headers.authorization) {
-    const token = req.headers.authorization;
-    check(token, String);
-    const hashedToken = Accounts._hashLoginToken(token);
-
-    // Get the user from the database
-    user = await Meteor.users.findOne(
-      {"services.resume.loginTokens.hashedToken": hashedToken});
-  }
-
-  return {
-    graphiql: true,
-    pretty: true,
-    schema,
-    resolvers,
-
-    // Attach the user to the context object
-    context: {
-      // The current user will now be available on context.user in all resolvers
-      user,
-    },
-  };
-}));
+});
 ```
 
 Now, you can use `context.user` from your resolvers:
