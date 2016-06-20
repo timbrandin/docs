@@ -209,7 +209,7 @@ Example use cases: `Infinite scroll`, `Data filtering`
 
 Redux's connect will pass `dispatch` as a prop unless action creators are passed using `mapDisptachToProps`. Likewise, the Apollo connect exposes part of the apollo-client api to props under the keys `query` and `mutate`. These correspond to the Apollo methods and can be used for custom needs outside of the ability of the wrapper component.
 
-<h2 id="using-with-redux">Using in concert with Redux</h2>
+<h2 id="using-with-redux">Using in connect with Redux</h2>
 
 
 ```js
